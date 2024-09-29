@@ -1,7 +1,9 @@
 [package]
 name = "blooemu"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+description = "the best library for OS API's manipulation"
+license = "MIT"
 
 [lib]
 crate-type = ["lib"]

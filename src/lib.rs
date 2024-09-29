@@ -1,52 +1,56 @@
-// Импорт winapi только для Windows
-#[cfg(target_os = "windows")]
-extern crate winapi;
-#[cfg(target_os = "windows")]
-use winapi::um::winuser::{MessageBoxW, MB_OK};
+pub mod popups;
+pub mod macros;
+pub mod utils;
 
-#[cfg(target_os = "windows")]
-use std::ffi::OsStr;
-#[cfg(target_os = "windows")]
-use std::os::windows::ffi::OsStrExt;
+pub use popups::{alert_message, error_message};
+pub use utils::{open, close};
 
-// Функция для отображения окна с предупреждением
-pub fn alert_message(message: &str) {
-    // Логика для Windows
-    #[cfg(target_os = "windows")]
-    {
-        let wide: Vec<u16> = OsStr::new(message)
-            .encode_wide()
-            .chain(std::iter::once(0))
-            .collect();
 
-        unsafe {
-            MessageBoxW(std::ptr::null_mut(), wide.as_ptr(), wide.as_ptr(), MB_OK);
-        }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_message() {
+        let message = "Test error message";
+        error_message(message, "Test Error Title", None);
     }
 
-    // Логика для Linux
-    #[cfg(target_os = "linux")]
-    {
-        use notify_rust::Notification;
-
-        Notification::new()
-            .summary("Alert")
-            .body(message)
-            .show()
-            .expect("Failed to send notification");
+    #[test]
+    fn test_open() {
+        let path = "C:/Users/Happy PC/Desktop/test.txt";
+        open(path);
     }
 
-    // Запасной вариант для других ОС
-    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
-    {
-        println!("Alert: {}", message);
+    #[test]
+    fn test_alert_macro() {
+        alert!("sss");
+        alert!(
+            "Test with yes and no callbacks",
+            "Custom Title",
+            "yesno",
+            || {
+                error!("you choose yes");
+            },
+            || {
+                error!("you choose no");
+            }
+        );
     }
-}
 
-// Макрос alert
-#[macro_export]
-macro_rules! alert {
-    ($msg:expr) => {
-        $crate::alert_message($msg);
-    };
+    #[test]
+    fn test_error_macro() {
+        error!("Test error macro");
+        error!("Test error with title", "Critical Error");
+        error!("Test error with callback", "Critical Error", || {
+            println!("Error callback executed");
+        });
+    }
+
+    #[test]
+    fn test_close() {
+        let process_name = "notepad.exe";
+        close(process_name);
+    }
 }
