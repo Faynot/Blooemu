@@ -5,7 +5,6 @@ Blooemu - is Rust library, for OS API's manipulation.
 You can use 1 and the same code that uses the OS API and it will work on different OS, you don't need to download a bunch of different libraries for each API to make the program work as it should on any OS
 
 Todo:
-Обновленная таблица с новыми пунктами и эмодзи 🕘:
 
 | Windows      | Linux        | MacOS     |
 | -------------| -------------|-----------|
@@ -13,33 +12,33 @@ Todo:
 | **Process Management:** |
 | open✅| open✅| open✅     |
 | close✅| close✅| close✅     |
-| get_pid🕘| get_pid🕘|           |
-| get_process_name🕘| get_process_name🕘|           |
-| get_process_memory_usage🕘| get_process_memory_usage🕘|           |
-| get_process_cpu_usage🕘| get_process_cpu_usage🕘|           |
-| get_all_processes🕘| get_all_processes🕘|           |
-| get_processes_by_name🕘| get_processes_by_name🕘|           |
-| elevate_privileges🕘| elevate_privileges🕘|           |
+| get_pid✅| get_pid✅|get_pid✅|
+| get_process_name🕘| get_process_name🕘|get_process_name🕘|
+| get_process_memory_usage🕘| get_process_memory_usage🕘| get_process_memory_usage🕘|
+| get_process_cpu_usage🕘| get_process_cpu_usage🕘| get_process_cpu_usage🕘|
+| get_all_processes🕘| get_all_processes🕘| get_all_processes🕘|
+| get_processes_by_name🕘| get_processes_by_name🕘| get_processes_by_name🕘|
+| elevate_privileges🕘| elevate_privileges🕘| elevate_privileges🕘|
 | **Network Interaction:** |
-| create_socket🕘| create_socket🕘|           |
-| bind_socket🕘| bind_socket🕘|           |
-| listen_socket🕘| listen_socket🕘|           |
-| connect_socket🕘| connect_socket🕘|           |
-| send_data🕘| send_data🕘|           |
-| receive_data🕘| receive_data🕘|           |
-| close_socket🕘| close_socket🕘|           |
-| is_network_available🕘| is_network_available🕘|           |
-| get_local_ip🕘| get_local_ip🕘|           |
-| get_external_ip🕘| get_external_ip🕘|           |
-| resolve_hostname🕘| resolve_hostname🕘|           |
-| get_hostname🕘| get_hostname🕘|           |
-| get_network_interfaces🕘| get_network_interfaces🕘|           |
-| get_interface_name🕘| get_interface_name🕘|           |
-| get_interface_mac_address🕘| get_interface_mac_address🕘|           |
-| set_interface_ip🕘| set_interface_ip🕘|           |
-| set_interface_mtu🕘| set_interface_mtu🕘|           |
+| create_socket🕘| create_socket🕘| create_socket🕘|
+| bind_socket🕘| bind_socket🕘| bind_socket🕘|
+| listen_socket🕘| listen_socket🕘| listen_socket🕘|
+| connect_socket🕘| connect_socket🕘| connect_socket🕘|
+| send_data🕘| send_data🕘| send_data🕘|
+| receive_data🕘| receive_data🕘| receive_data🕘|
+| close_socket🕘| close_socket🕘| close_socket🕘|
+| is_network_available🕘| is_network_available🕘| is_network_available🕘|
+| get_local_ip🕘| get_local_ip🕘| get_local_ip🕘|
+| get_external_ip🕘| get_external_ip🕘| get_external_ip🕘|
+| resolve_hostname🕘| resolve_hostname🕘| resolve_hostname🕘|
+| get_hostname🕘| get_hostname🕘| get_hostname🕘|
+| get_network_interfaces🕘| get_network_interfaces🕘| get_network_interfaces🕘|
+| get_interface_name🕘| get_interface_name🕘| get_interface_name🕘|
+| get_interface_mac_address🕘| get_interface_mac_address🕘| get_interface_mac_address🕘|
+| set_interface_ip🕘| set_interface_ip🕘| set_interface_ip🕘|
+| set_interface_mtu🕘| set_interface_mtu🕘| set_interface_mtu🕘|
 | **File System:** |
-| create_file🕘| create_file🕘|           |
+| create_file🕘| create_file🕘| create_file🕘|
 | open_file🕘| open_file🕘|           |
 | read_file🕘| read_file🕘|           |
 | write_file🕘| write_file🕘|           |
