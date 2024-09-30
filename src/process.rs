@@ -1,31 +1,142 @@
 #[cfg(target_os = "linux")]
-use procfs::process::{all_processes, Process};
+use procfs::process::{all_processes, Process, ProcessStat};
 #[cfg(target_os = "windows")]
 use std::ffi::CStr;
 #[cfg(target_os = "windows")]
 use std::ptr::null_mut;
 #[cfg(target_os = "windows")]
+use winapi::shared::minwindef::FILETIME;
+#[cfg(target_os = "windows")]
 use winapi::um::handleapi::CloseHandle;
+#[cfg(target_os = "windows")]
+use winapi::um::processthreadsapi::GetProcessTimes;
+#[cfg(target_os = "windows")]
+use winapi::um::processthreadsapi::OpenProcess;
+#[cfg(target_os = "windows")]
+use winapi::um::psapi::{GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};
 #[cfg(target_os = "windows")]
 use winapi::um::tlhelp32::{
     CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS,
 };
+#[cfg(target_os = "windows")]
+use winapi::um::winnt::PROCESS_QUERY_INFORMATION;
 
-// Linux/MacOS implementation using procfs
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-pub fn get_pid(task_name: &str) -> Option<i32> {
-    for process in all_processes().unwrap() {
-        if let Ok(proc) = process {
-            // Convert task_name to lower case for case-insensitive comparison
-            if proc.stat.comm.to_lowercase() == task_name.to_lowercase() {
-                return Some(proc.pid); // Return the PID without closing the process
-            }
+use std::time::Duration;
+
+#[cfg(target_os = "windows")]
+pub fn get_process_cpu_usage(task_name: &str) -> Option<f32> {
+    let pid = get_pid(task_name)?;
+
+    unsafe {
+        let process_handle = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
+        if process_handle.is_null() {
+            return None;
         }
+
+        let mut creation_time: FILETIME = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut exit_time: FILETIME = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut kernel_time: FILETIME = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut user_time: FILETIME = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+
+        if GetProcessTimes(
+            process_handle,
+            &mut creation_time,
+            &mut exit_time,
+            &mut kernel_time,
+            &mut user_time,
+        ) != 0
+        {
+            let kernel_time = filetime_to_duration(kernel_time);
+            let user_time = filetime_to_duration(user_time);
+            let total_time = kernel_time + user_time;
+
+            // Calculate CPU usage as a percentage
+            let cpu_usage = total_time.as_secs_f32(); // Adjust as necessary to reflect the total elapsed time since creation
+            CloseHandle(process_handle);
+            return Some(cpu_usage);
+        }
+
+        CloseHandle(process_handle);
+        None
     }
-    None
 }
 
-// Windows implementation using winapi
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn get_process_cpu_usage(task_name: &str) -> Option<f32> {
+    let pid = get_pid(task_name)?;
+
+    match Process::new(pid) {
+        Ok(process) => {
+            let cpu_usage = process.stat.utime as f32 + process.stat.stime as f32; // User time + System time
+            let total_time =
+                process.stat.utime + process.stat.stime + process.stat.cutime + process.stat.cstime;
+
+            if total_time > 0 {
+                return Some((cpu_usage / total_time as f32) * 100.0); // CPU usage as a percentage
+            }
+        }
+        Err(_) => return None,
+    }
+
+    None
+}
+#[cfg(target_os = "windows")]
+fn filetime_to_duration(filetime: FILETIME) -> Duration {
+    let ft = u64::from(filetime.dwHighDateTime) << 32 | u64::from(filetime.dwLowDateTime);
+    Duration::from_nanos(ft * 10) // Convert from 100-nanosecond intervals to nanoseconds
+}
+#[cfg(target_os = "windows")]
+pub fn get_process_memory_usage(task_name: &str) -> Option<u64> {
+    let pid = get_pid(task_name)?;
+
+    unsafe {
+        let process_handle = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
+        if process_handle.is_null() {
+            return None;
+        }
+
+        let mut memory_counters: PROCESS_MEMORY_COUNTERS = std::mem::zeroed();
+        if GetProcessMemoryInfo(
+            process_handle,
+            &mut memory_counters,
+            std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
+        ) != 0
+        {
+            CloseHandle(process_handle); // Closes a handle
+            return Some(memory_counters.WorkingSetSize.try_into().unwrap()); // Convert usize to u64
+        }
+
+        CloseHandle(process_handle); // Close the handle in case of an error
+        None
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn get_process_memory_usage(task_name: &str) -> Option<u64> {
+    let pid = get_pid(task_name)?;
+
+    match Process::new(pid) {
+        Ok(process) => {
+            let memory_info = process.stat;
+            Some(memory_info.rss as u64) // // Return RSS (Resident Set Size) as the amount of memory used
+        }
+        Err(_) => None,
+    }
+}
+
+
 #[cfg(target_os = "windows")]
 pub fn get_pid(task_name: &str) -> Option<u32> {
     unsafe {
@@ -42,9 +153,10 @@ pub fn get_pid(task_name: &str) -> Option<u32> {
                 let process_name = CStr::from_ptr(entry.szExeFile.as_ptr())
                     .to_string_lossy()
                     .into_owned();
-                // Use case-insensitive comparison for Windows
-                if process_name.to_lowercase().contains(&task_name.to_lowercase()) {
-                    // Close the handle after use, without terminating the process
+                if process_name
+                    .to_lowercase()
+                    .contains(&task_name.to_lowercase())
+                {
                     CloseHandle(snapshot);
                     return Some(entry.th32ProcessID);
                 }
@@ -55,12 +167,12 @@ pub fn get_pid(task_name: &str) -> Option<u32> {
             }
         }
 
-        CloseHandle(snapshot); // Close the handle anyway
+        CloseHandle(snapshot);
         None
     }
 }
 
-// Function to get the process name by ID for Linux/MacOS
+
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub fn get_process_name(pid: i32) -> Option<String> {
     match Process::new(pid) {
@@ -69,7 +181,7 @@ pub fn get_process_name(pid: i32) -> Option<String> {
     }
 }
 
-// Function to get the process name by ID for Windows
+
 #[cfg(target_os = "windows")]
 pub fn get_process_name(pid: u32) -> Option<String> {
     unsafe {
@@ -87,7 +199,7 @@ pub fn get_process_name(pid: u32) -> Option<String> {
                     let process_name = CStr::from_ptr(entry.szExeFile.as_ptr())
                         .to_string_lossy()
                         .into_owned();
-                    CloseHandle(snapshot); // Close the handle after use, without terminating the process
+                    CloseHandle(snapshot);
                     return Some(process_name);
                 }
 
@@ -97,7 +209,7 @@ pub fn get_process_name(pid: u32) -> Option<String> {
             }
         }
 
-        CloseHandle(snapshot); // Close the handle anyway
+        CloseHandle(snapshot);
         None
     }
 }

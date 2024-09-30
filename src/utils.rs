@@ -1,6 +1,5 @@
 use std::env;
 
-
 // Function to open a file or application
 pub fn open(path: &str) {
     let os = env::consts::OS;
@@ -68,4 +67,3 @@ pub fn get_pid(task_name: &str) -> Option<i32> {
     }
     None
 }
-
