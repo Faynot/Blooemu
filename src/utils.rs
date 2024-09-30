@@ -1,17 +1,7 @@
 use std::env;
-#[cfg(target_os = "linux")]
-use procfs::process::all_processes;
-#[cfg(target_os = "windows")]
-use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS,
-};
-#[cfg(target_os = "windows")]
-use winapi::um::handleapi::CloseHandle;
-#[cfg(target_os = "windows")]
-use std::ptr::null_mut;
-#[cfg(target_os = "windows")]
-use std::ffi::{CStr, CString};
 
+
+// Function to open a file or application
 pub fn open(path: &str) {
     let os = env::consts::OS;
 
@@ -38,6 +28,7 @@ pub fn open(path: &str) {
     }
 }
 
+// Function to close a process by name
 pub fn close(name: &str) {
     let os = env::consts::OS;
 
@@ -64,62 +55,17 @@ pub fn close(name: &str) {
     }
 }
 
-// Linux implementation using procfs
-#[cfg(target_os = "linux")]
+// Linux/MacOS implementation using procfs
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub fn get_pid(task_name: &str) -> Option<i32> {
     for process in all_processes().unwrap() {
         if let Ok(proc) = process {
-            if proc.stat.comm == task_name {
-                return Some(proc.pid);
+            // Convert task_name to lower case for case-insensitive comparison
+            if proc.stat.comm.to_lowercase() == task_name.to_lowercase() {
+                return Some(proc.pid); // Return the PID without closing the process
             }
         }
     }
     None
 }
 
-// MacOS implementation (using procfs-like logic)
-#[cfg(target_os = "macos")]
-pub fn get_pid(task_name: &str) -> Option<i32> {
-    for process in all_processes().unwrap() {
-        if let Ok(proc) = process {
-            if proc.stat.comm == task_name {
-                return Some(proc.pid);
-            }
-        }
-    }
-    None
-}
-
-// Windows implementation using winapi
-#[cfg(target_os = "windows")]
-pub fn get_pid(task_name: &str) -> Option<u32> {
-    unsafe {
-        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if snapshot == null_mut() {
-            return None;
-        }
-
-        let mut entry: PROCESSENTRY32 = std::mem::zeroed();
-        entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-
-        if Process32First(snapshot, &mut entry) == 1 {
-            loop {
-                // Используем CStr вместо CString
-                let process_name = CStr::from_ptr(entry.szExeFile.as_ptr())
-                    .to_string_lossy()
-                    .into_owned();
-                if process_name.to_lowercase().contains(&task_name.to_lowercase()) {
-                    CloseHandle(snapshot); // Закрываем хендл после использования
-                    return Some(entry.th32ProcessID);
-                }
-
-                if Process32Next(snapshot, &mut entry) == 0 {
-                    break;
-                }
-            }
-        }
-
-        CloseHandle(snapshot); // Закрываем хендл в любом случае
-        None
-    }
-}
