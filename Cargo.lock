@@ -193,9 +193,11 @@ dependencies = [
 
 [[package]]
 name = "blooemu"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "cfg-if",
+ "libc",
+ "nix",
  "notify-rust",
  "winapi",
 ]
