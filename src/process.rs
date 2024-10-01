@@ -23,6 +23,52 @@ use winapi::um::winnt::PROCESS_QUERY_INFORMATION;
 
 use std::time::Duration;
 
+
+
+
+
+
+#[cfg(target_os = "windows")]
+pub fn get_all_processes() -> Vec<(u32, String)> {
+    let mut processes = Vec::new();
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if snapshot == null_mut() {
+            return processes;
+        }
+
+        let mut entry: PROCESSENTRY32 = std::mem::zeroed();
+        entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
+
+        if Process32First(snapshot, &mut entry) == 1 {
+            loop {
+                let process_name = CStr::from_ptr(entry.szExeFile.as_ptr())
+                    .to_string_lossy()
+                    .into_owned();
+                processes.push((entry.th32ProcessID, process_name));
+                if Process32Next(snapshot, &mut entry) == 0 {
+                    break;
+                }
+            }
+        }
+
+        CloseHandle(snapshot);
+    }
+    processes
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn get_all_processes() -> Vec<(i32, String)> {
+    all_processes()
+        .filter_map(|process| {
+            let process = process.ok()?;
+            Some((process.stat.pid, process.stat.comm))
+        })
+        .collect()
+}
+
+
+
 #[cfg(target_os = "windows")]
 pub fn get_process_cpu_usage(task_name: &str) -> Option<f32> {
     let pid = get_pid(task_name)?;
@@ -111,7 +157,7 @@ pub fn get_process_memory_usage(task_name: &str) -> Option<u64> {
         if GetProcessMemoryInfo(
             process_handle,
             &mut memory_counters,
-            std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
+            size_of::<PROCESS_MEMORY_COUNTERS>() as u32,
         ) != 0
         {
             CloseHandle(process_handle); // Closes a handle
@@ -146,7 +192,7 @@ pub fn get_pid(task_name: &str) -> Option<u32> {
         }
 
         let mut entry: PROCESSENTRY32 = std::mem::zeroed();
-        entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+        entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
 
         if Process32First(snapshot, &mut entry) == 1 {
             loop {
@@ -191,7 +237,7 @@ pub fn get_process_name(pid: u32) -> Option<String> {
         }
 
         let mut entry: PROCESSENTRY32 = std::mem::zeroed();
-        entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+        entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
 
         if Process32First(snapshot, &mut entry) == 1 {
             loop {

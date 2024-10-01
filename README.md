@@ -14,10 +14,9 @@ Todo:
 | close✅| close✅| close✅     |
 | get_pid✅| get_pid✅|get_pid✅|
 | get_process_name✅| get_process_name✅|get_process_name✅|
-| get_process_memory_usage🕘| get_process_memory_usage🕘| get_process_memory_usage🕘|
-| get_process_cpu_usage🕘| get_process_cpu_usage🕘| get_process_cpu_usage🕘|
-| get_all_processes🕘| get_all_processes🕘| get_all_processes🕘|
-| get_processes_by_name🕘| get_processes_by_name🕘| get_processes_by_name🕘|
+| get_process_memory_usage✅| get_process_memory_usage✅| get_process_memory_usage✅|
+| get_process_cpu_usage✅| get_process_cpu_usage✅| get_process_cpu_usage✅|
+| get_all_processes✅| get_all_processes✅| get_all_processes✅|
 | elevate_privileges🕘| elevate_privileges🕘| elevate_privileges🕘|
 | **Network Interaction:** |
 | create_socket🕘| create_socket🕘| create_socket🕘|

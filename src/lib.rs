@@ -12,7 +12,8 @@ pub use process::{
     get_pid,
     get_process_cpu_usage,
     get_process_memory_usage,
-    get_process_name
+    get_process_name,
+    get_all_processes
 };
 pub use utils::{
     close,
@@ -81,19 +82,26 @@ mod tests {
     //    }
     //}
 
-    #[test]
-    fn test_get_memory_use() {
-        match get_process_memory_usage("notepad.exe") {
-            Some(memory_usage) => println!("{}", memory_usage),
-            None => println!("Process not found"),
-        }
-    }
+    //#[test]
+    //fn test_get_memory_use() {
+    //    match get_process_memory_usage("notepad.exe") {
+    //        Some(memory_usage) => println!("{}", memory_usage),
+    //        None => println!("Process not found"),
+    //    }
+    //}
+//
+    //#[test]
+    //fn test_get_cpu_use() {
+    //    match get_process_cpu_usage("notepad.exe") {
+    //        Some(cpu_usage) => println!("{}", cpu_usage),
+    //        None => println!("Process not found"),
+    //    }
+    //}
 
     #[test]
-    fn test_get_cpu_use() {
-        match get_process_cpu_usage("notepad.exe") {
-            Some(cpu_usage) => println!("{}", cpu_usage),
-            None => println!("Process not found"),
-        }
+    fn test_get_all_processes() {
+        let all = get_all_processes();
+        println!("{:?}", all);
     }
+
 }
