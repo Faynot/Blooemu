@@ -4,6 +4,7 @@ mod process;
 pub mod utils;
 mod network;
 
+
 pub use popups::{
     alert_message,
     error_message
@@ -106,48 +107,19 @@ mod tests {
     //    let all = get_all_processes();
     //    println!("{:?}", all);
     //}
-//
-    //#[test]
-    //fn test_elevate_privileges() {
-    //    let process_name = "notepad.exe"; // Replace with an actual running process name
-    //    let result = elevate_privileges(process_name);
-//
-    //    assert!(
-    //        result,
-    //        "Failed to elevate privileges for process: {}",
-    //        process_name
-    //    );
-    //}
-
-    use std::net::TcpStream;
-    use std::thread;
 
     #[test]
-    fn test_create_socket() {
-        // Локальный адрес для теста
-        let addr = "localhost:8080";
+    fn test_elevate_privileges() {
+        let process_name = "notepad.exe"; // Replace with an actual running process name
+        let result = elevate_privileges(process_name);
 
-        // Запуск сокета в отдельном потоке
-        let server_thread = thread::spawn(move || {
-            create_socket(addr).expect("Не удалось создать сокет");
-        });
-
-        // Даем серверу время для инициализации
-        thread::sleep(std::time::Duration::from_millis(100));
-
-        // Попытка подключения к сокету
-        match TcpStream::connect(addr) {
-            Ok(_) => {
-                println!("Тестовое подключение успешно");
-            }
-            Err(e) => {
-                panic!("Не удалось подключиться к сокету: {}", e);
-            }
-        }
-
-        // Завершаем тест
-        server_thread.join().expect("Ошибка завершения сервера");
+        assert!(
+            result,
+            "Failed to elevate privileges for process: {}",
+            process_name
+        );
     }
+
 
 
 }

@@ -20,7 +20,7 @@ Todo:
 | elevate_privileges✅            | elevate_privileges✅| elevate_privileges✅|
 | elevate_privileges_by_pid✅     | elevate_privileges_by_pid✅| elevate_privileges_by_pid✅|
 | **Network Interaction:**       |
-| create_socket🕘                | create_socket🕘| create_socket🕘|
+| create_socket✅                | create_socket✅| create_socket✅|
 | bind_socket🕘                  | bind_socket🕘| bind_socket🕘|
 | listen_socket🕘                | listen_socket🕘| listen_socket🕘|
 | connect_socket🕘               | connect_socket🕘| connect_socket🕘|

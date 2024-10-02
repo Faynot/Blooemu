@@ -3,14 +3,17 @@ use std::io::{self, Read, Write};
 use std::thread;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
-pub fn create_socket(addr: &str) -> io::Result<()> {
-    // Create a socket at the specified address
+pub type RequestHandler = fn(&str) -> String;
+
+pub fn create_socket(addr: &str, handler: RequestHandler) -> io::Result<()> {
+    // Создаем сокет по указанному адресу
     let listener = TcpListener::bind(addr)?;
     let local_addr = listener.local_addr()?;
     println!("Socket running on {}", local_addr);
 
-    // Flag for server state management
+    // Флаг для управления состоянием сервера
     let running = Arc::new(AtomicBool::new(true));
 
     for stream in listener.incoming() {
@@ -20,10 +23,11 @@ pub fn create_socket(addr: &str) -> io::Result<()> {
                 let peer_addr = stream.peer_addr()?;
                 println!("Connection from {}", peer_addr);
 
-                // Processing the connection in a separate thread
+                // Обработка подключения в отдельном потоке
                 let running_clone = Arc::clone(&running);
+                let handler_clone = handler; // Клонируем обработчик
                 thread::spawn(move || {
-                    if let Err(e) = handle_client(&mut stream, &running_clone, peer_addr) {
+                    if let Err(e) = handle_client(&mut stream, &running_clone, peer_addr, handler_clone) {
                         eprintln!("Client processing error {}: {}", peer_addr, e);
                     }
                 });
@@ -33,7 +37,7 @@ pub fn create_socket(addr: &str) -> io::Result<()> {
             }
         }
 
-        // The server continues to listen for new connections
+        // Сервер продолжает слушать новые соединения
         if !running.load(Ordering::Relaxed) {
             break;
         }
@@ -42,26 +46,29 @@ pub fn create_socket(addr: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn handle_client(stream: &mut TcpStream, _running: &Arc<AtomicBool>, peer_addr: std::net::SocketAddr) -> io::Result<()> {
+fn handle_client(stream: &mut TcpStream, _running: &Arc<AtomicBool>, peer_addr: std::net::SocketAddr, handler: RequestHandler) -> io::Result<()> {
     let mut buffer = [0; 512];
 
-    // Reading data
+    // Чтение данных
     let bytes_read = stream.read(&mut buffer)?;
     if bytes_read == 0 {
         println!("Connection closed by the client {}", peer_addr);
         return Ok(());
     }
 
-    // Displaying the obtained data
+    // Отображение полученных данных
     let request = String::from_utf8_lossy(&buffer[..bytes_read]);
     println!("Request received from {}: {}", peer_addr, request);
 
-    // Sending a response
-    let response = b"HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello Blooemu!";
-    stream.write_all(response)?;
+    // Обработка запроса с помощью пользовательского обработчика
+    let response_body = handler(&request);
+    let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", response_body.len(), response_body);
+
+    // Отправка ответа
+    stream.write_all(response.as_bytes())?;
     println!("Response successfully sent to client {}", peer_addr);
 
-    // Complete the connection after sending
+    // Завершение соединения после отправки
     stream.shutdown(std::net::Shutdown::Both)?;
     println!("The connection to the {} client is complete", peer_addr);
 
