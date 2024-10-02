@@ -22,7 +22,10 @@ pub use utils::{
     close,
     open
 };
-pub use network::create_socket;
+pub use network::{
+    create_socket,
+    bind_socket
+};
 
 
 #[cfg(test)]
