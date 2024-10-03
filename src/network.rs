@@ -1,11 +1,83 @@
+use serde_json::Value;
 use std::io::{self, Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
-use serde_json::Value;
-
+use std::time::Duration;
 pub type RequestHandler = fn(&str, Option<Value>) -> String;
+
+pub fn get_external_ip() -> io::Result<String> {
+    // The URL of the service that returns the external IP address
+    let address = "api.ipify.org:80";
+    let request = "GET / HTTP/1.1\r\nHost: api.ipify.org\r\nConnection: close\r\n\r\n";
+
+    // Connecting to the server
+    let stream_result = TcpStream::connect(address.to_socket_addrs()?.next().unwrap());
+
+    let mut stream = match stream_result {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Connection error: {}", e);
+            return Err(io::Error::new(
+                io::ErrorKind::NotConnected,
+                "No internet connection",
+            ));
+        }
+    };
+
+    // Sending an HTTP request
+    if let Err(e) = stream.write_all(request.as_bytes()) {
+        eprintln!("Error sending request: {}", e);
+        return Err(e);
+    }
+
+    // Reading an answer
+    let mut response = Vec::new();
+    if let Err(e) = stream.read_to_end(&mut response) {
+        eprintln!("Error when reading the answer: {}", e);
+        return Err(e);
+    }
+
+    // Convert an answer to a string
+    let response_str = String::from_utf8_lossy(&response);
+
+    // Parsing an IP address from a response
+    if let Some(ip_start) = response_str.find("\r\n\r\n") {
+        let ip_address = &response_str[ip_start + 4..]; // Removing headings
+        return Ok(ip_address.trim().to_string());
+    }
+
+    Err(io::Error::new(
+        io::ErrorKind::Other,
+        "Failed to parse IP address",
+    ))
+}
+
+pub fn get_local_ip() -> io::Result<IpAddr> {
+    let listener = TcpListener::bind("0.0.0.0:0")?;
+    let local_addr = listener.local_addr()?;
+    Ok(local_addr.ip())
+}
+pub fn is_network_available(addr: &str) -> bool {
+    // Add the standard port 80 if it is not specified
+    let socket_addr = if addr.contains(':') {
+        match addr.parse::<SocketAddr>() {
+            Ok(addr) => addr,
+            Err(e) => {
+                eprintln!("Address parsing error: {}", e);
+                return false;
+            }
+        }
+    } else {
+        format!("{}:80", addr) // Adding Port 80
+            .parse::<SocketAddr>()
+            .expect("Address parsing error")
+    };
+
+    // Timed Out Connection Attempt
+    TcpStream::connect_timeout(&socket_addr, Duration::from_secs(2)).is_ok()
+}
 
 pub fn create_socket(addr: &str, handler: RequestHandler) -> io::Result<()> {
     let listener = TcpListener::bind(addr)?;
@@ -47,7 +119,7 @@ pub fn create_socket(addr: &str, handler: RequestHandler) -> io::Result<()> {
 fn handle_client(
     stream: &mut TcpStream,
     _running: &Arc<AtomicBool>,
-    peer_addr: std::net::SocketAddr,
+    peer_addr: SocketAddr,
     handler: RequestHandler,
 ) -> io::Result<()> {
     let mut buffer = [0; 1024];

@@ -24,6 +24,9 @@ pub use utils::{
 };
 pub use network::{
     create_socket,
+    is_network_available,
+    get_local_ip,
+    get_external_ip
 };
 
 
