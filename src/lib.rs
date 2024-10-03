@@ -24,7 +24,6 @@ pub use utils::{
 };
 pub use network::{
     create_socket,
-    bind_socket
 };
 
 
