@@ -1,10 +1,56 @@
 use serde_json::Value;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, ErrorKind};
 use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+
+
+pub fn send_data(address: &str, request: &str) -> Result<String, String> {
+    // Устанавливаем соединение с сервером
+    let mut stream = TcpStream::connect(address).map_err(|e| e.to_string())?;
+    stream.set_read_timeout(Some(Duration::new(5, 0))).map_err(|e| e.to_string())?;
+
+    // Отправляем запрос
+    stream.write_all(request.as_bytes()).map_err(|e| e.to_string())?;
+
+    // Читаем ответ
+    let mut response = String::new();
+    stream.read_to_string(&mut response).map_err(|e| e.to_string())?;
+
+    Ok(response)
+}
+
+
+pub fn close_socket(addr: SocketAddr) -> Result<(), io::Error> {
+    // Попытка подключения к адресу сокета
+    let mut stream = TcpStream::connect(addr)?;
+
+    // Отправка пустого сообщения для проверки работоспособности сокета
+    let msg = b"";
+    stream.write_all(msg)?;
+
+    // Закрытие сокета
+    stream.shutdown(std::net::Shutdown::Both)?;
+
+    // Проверка ошибки
+    if let Err(err) = stream.read(&mut [0; 1]) {
+        // Если ошибка "Connection reset by peer", то сокет закрыт
+        if err.kind() == ErrorKind::ConnectionReset {
+            Ok(())
+        } else {
+            Err(err)
+        }
+    } else {
+        // Если чтение прошло успешно, сокет не закрыт
+        Err(io::Error::new(
+            ErrorKind::Other,
+            "Сокет не закрыт или не был подключен",
+        ))
+    }
+}
+
 pub type RequestHandler = fn(&str, Option<Value>) -> String;
 
 pub fn get_external_ip() -> io::Result<String> {
@@ -20,7 +66,7 @@ pub fn get_external_ip() -> io::Result<String> {
         Err(e) => {
             eprintln!("Connection error: {}", e);
             return Err(io::Error::new(
-                io::ErrorKind::NotConnected,
+                ErrorKind::NotConnected,
                 "No internet connection",
             ));
         }
@@ -49,7 +95,7 @@ pub fn get_external_ip() -> io::Result<String> {
     }
 
     Err(io::Error::new(
-        io::ErrorKind::Other,
+        ErrorKind::Other,
         "Failed to parse IP address",
     ))
 }
@@ -189,3 +235,6 @@ fn parse_http_request(request: &str) -> (String, String, String) {
 
     (method, path, body)
 }
+
+
+

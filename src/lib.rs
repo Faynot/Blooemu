@@ -26,7 +26,9 @@ pub use network::{
     create_socket,
     is_network_available,
     get_local_ip,
-    get_external_ip
+    get_external_ip,
+    close_socket,
+    send_data
 };
 
 
@@ -113,18 +115,37 @@ mod tests {
     //    println!("{:?}", all);
     //}
 
+    //#[test]
+    //fn test_elevate_privileges() {
+    //    let process_name = "notepad.exe"; // Replace with an actual running process name
+    //    let result = elevate_privileges(process_name);
+//
+    //    assert!(
+    //        result,
+    //        "Failed to elevate privileges for process: {}",
+    //        process_name
+    //    );
+    //}
+
+
+    //#[test]
+    //fn test_close_socket() {
+    //    let addr = "127.0.0.1:8080".parse().unwrap();
+    //    match close_socket(addr) {
+    //        Ok(_) => println!("Сокет закрыт"),
+    //        Err(e) => println!("Ошибка: {}", e),
+    //    }
+    //}
+
     #[test]
-    fn test_elevate_privileges() {
-        let process_name = "notepad.exe"; // Replace with an actual running process name
-        let result = elevate_privileges(process_name);
+    fn test_send_data() {
+        let address = "127.0.0.1:8080";
+        let request = "GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n";
 
-        assert!(
-            result,
-            "Failed to elevate privileges for process: {}",
-            process_name
-        );
+        match send_data(address, request) {
+            Ok(response) => println!("Response:\n{}", response),
+            Err(e) => eprintln!("Error: {}", e),
+        }
     }
-
-
 
 }

@@ -1,31 +1,40 @@
 import socket
+import json
 
 
-def send_request(host, port, message):
-    # Создаем сокет
+def send_json_to_socket(json_data, host='127.0.0.1', port=7676):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # Подключаемся к серверу
         s.connect((host, port))
 
-        # Отправляем запрос
-        s.sendall(message.encode('utf-8'))
+        json_str = json.dumps(json_data)
+        request = (
+            f"POST / HTTP/1.1\r\n"
+            f"Host: {host}:{port}\r\n"
+            f"Content-Type: application/json\r\n"
+            f"Content-Length: {len(json_str)}\r\n"
+            f"Connection: close\r\n\r\n"
+            f"{json_str}"
+        )
 
-        # Получаем ответ
-        response = s.recv(4096).decode('utf-8')
+        s.sendall(request.encode())
 
-    return response
+        # Читаем ответ
+        response = b""
+        while True:
+            data = s.recv(1024)
+            if not data:
+                break
+            response += data
+
+        print("Received response from server:")
+        print(response.decode())
 
 
 if __name__ == "__main__":
-    host = '127.0.0.1'  # Адрес сервера
-    port = 8080  # Порт сервера, к которому вы изменили bind_socket
+    json_data = {
+        "name": "Alice",
+        "age": 30,
+        "message": "Hello, server!"
+    }
 
-    # Пример GET-запроса
-    request_message = "GET / HTTP/1.1\r\nHost: {}\r\n\r\n".format(host)
-
-    # Отправляем запрос и получаем ответ
-    response = send_request(host, port, request_message)
-
-    # Выводим ответ на экран
-    print("Response from server:")
-    print(response)
+    send_json_to_socket(json_data)
