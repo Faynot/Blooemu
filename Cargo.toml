@@ -1,6 +1,6 @@
 [package]
 name = "blooemu"
-version = "0.1.15"
+version = "0.1.16"
 edition = "2021"
 description = "the best library for OS API's manipulation"
 license = "MIT"

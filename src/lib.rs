@@ -30,7 +30,9 @@ pub use network::{
     close_socket,
     send_data,
     get_hostname,
-    get_network_interfaces
+    get_network_interfaces,
+    resolve_hostname,
+    listen_socket
 };
 
 
@@ -149,5 +151,38 @@ mod tests {
     //         Err(e) => eprintln!("Error: {}", e),
     //     }
     // }
+
+    //#[test]
+    //fn test_resolve_hostname() {
+    //    let hostname = "example.com";
+    //    match resolve_hostname(hostname) {
+    //        Ok(ip) => println!("IP address of {} is {}", hostname, ip),
+    //        Err(e) => println!("Error: {}", e),
+    //    }
+    //}
+
+    //use std::net::TcpStream;
+    //use std::thread;
+    //use std::time::Duration;
+
+    //#[test]
+    //fn test_listen_socket() {
+    //    let addr = "127.0.0.1:8081";
+//
+    //    // Запуск сокета в отдельном потоке
+    //    let handle = thread::spawn(move || {
+    //        listen_socket(addr).expect("Failed to start socket");
+    //    });
+//
+    //    // Ждем некоторое время, чтобы сокет успел запуститься
+    //    thread::sleep(Duration::from_millis(100));
+//
+    //    // Попытка подключения к сокету
+    //    let result = TcpStream::connect(addr);
+    //    assert!(result.is_ok(), "Failed to connect to the socket");
+//
+    //    // Проверка завершения работы сокета
+    //    handle.join().unwrap();
+    //}
 
 }

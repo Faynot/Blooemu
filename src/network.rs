@@ -20,6 +20,63 @@ use std::ffi::CStr;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use pnet::datalink;
 
+
+pub fn listen_socket(addr: &str) -> io::Result<()> {
+    let listener = TcpListener::bind(addr)?;
+    println!("Listening for connections on {}", addr);
+
+    // Waiting for incoming connections
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                println!("New connection from: {}", stream.peer_addr()?);
+
+                // Handling the connection in a separate thread
+                thread::spawn(move || {
+                    if let Err(e) = handle_connection(stream) {
+                        eprintln!("Error handling connection: {}", e);
+                    }
+                });
+            }
+            Err(e) => {
+                eprintln!("Failed to accept connection: {}", e);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
+    let mut buffer = [0; 1024];
+    let bytes_read = stream.read(&mut buffer)?;
+
+    if bytes_read == 0 {
+        return Err(io::Error::new(ErrorKind::ConnectionAborted, "Connection closed"));
+    }
+
+    println!("Received data: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+
+    stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n")?;
+    stream.flush()?;
+    Ok(())
+}
+
+
+pub fn resolve_hostname(hostname: &str) -> Result<IpAddr, String> {
+    let addrs = (hostname, 0).to_socket_addrs(); // Port 0, since it is not important when resolving the hostname
+    match addrs {
+        Ok(mut addresses) => {
+            if let Some(socket_addr) = addresses.next() {
+                Ok(socket_addr.ip())
+            } else {
+                Err(format!("No IP addresses found for hostname: {}", hostname))
+            }
+        },
+        Err(e) => Err(format!("Failed to resolve hostname {}: {}", hostname, e)),
+    }
+}
+
+
 #[derive(Debug)]
 pub struct NetworkInterface {
     pub name: String,
@@ -32,17 +89,17 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
     let mut buf_len: ULONG = 0;
 
     unsafe {
-        // Первая попытка вызова для получения требуемого размера буфера
+        // First call attempt to get the required buffer size
         let ret = GetAdaptersAddresses(0, 0, null_mut(), null_mut(), &mut buf_len);
         if ret != ERROR_BUFFER_OVERFLOW {
             return adapters;
         }
 
-        // Выделяем буфер для адаптеров
+        // Allocating a buffer for adapters
         let mut buf: Vec<u8> = vec![0; buf_len as usize];
         let adapter_addresses = buf.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES;
 
-        // Вторая попытка вызова для получения данных об адаптерах
+        // Second call attempt to get adapter information
         if GetAdaptersAddresses(0, 0, null_mut(), adapter_addresses, &mut buf_len) == 0 {
             let mut adapter = adapter_addresses;
             while !adapter.is_null() {
@@ -51,7 +108,7 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
                 let name = CStr::from_ptr(adapter_ref.AdapterName).to_string_lossy().into_owned();
                 let mut ips = Vec::new();
 
-                // Перебираем IP-адреса адаптера
+                // Second call attempt to get adapter information
                 let mut address = adapter_ref.FirstUnicastAddress;
                 while !address.is_null() {
                     let addr = &*address;
@@ -63,7 +120,7 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
                     address = addr.Next;
                 }
 
-                // Пропускаем loopback-интерфейсы по IP-адресам
+                // Passing loopback interfaces by IP addresses
                 if !ips.iter().any(|ip| ip.starts_with("127.") || ip == "::1") {
                     adapters.push(NetworkInterface { name, ip_addresses: ips });
                 }
@@ -89,7 +146,7 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
             ips.push(ip.ip().to_string());
         }
 
-        // Пропускаем loopback-интерфейсы по IP-адресам
+        // Passing loopback interfaces by IP addresses
         if !ips.iter().any(|ip| ip.starts_with("127.") || ip == "::1") {
             interfaces.push(NetworkInterface {
                 name,
@@ -134,7 +191,7 @@ pub fn get_hostname() -> io::Result<String> {
 
 
 pub fn send_data(address: &str, request: &str) -> Result<String, String> {
-    // Устанавливаем соединение с сервером
+    // Establishing a connection to the server
     let mut stream = TcpStream::connect(address).map_err(|e| e.to_string())?;
     stream.set_read_timeout(Some(Duration::new(5, 0))).map_err(|e| e.to_string())?;
 
@@ -150,19 +207,19 @@ pub fn send_data(address: &str, request: &str) -> Result<String, String> {
 
 
 pub fn close_socket(addr: SocketAddr) -> Result<(), io::Error> {
-    // Попытка подключения к адресу сокета
+    // Attempting to connect to a socket address
     let mut stream = TcpStream::connect(addr)?;
 
-    // Отправка пустого сообщения для проверки работоспособности сокета
+    // Sending an empty message to check if a socket is working
     let msg = b"";
     stream.write_all(msg)?;
 
-    // Закрытие сокета
+    // Closing a socket
     stream.shutdown(std::net::Shutdown::Both)?;
 
-    // Проверка ошибки
+    // Error checking
     if let Err(err) = stream.read(&mut [0; 1]) {
-        // Если ошибка "Connection reset by peer", то сокет закрыт
+        // If the error is "Connection reset by peer", then the socket is closed
         if err.kind() == ErrorKind::ConnectionReset {
             Ok(())
         } else {
@@ -172,7 +229,7 @@ pub fn close_socket(addr: SocketAddr) -> Result<(), io::Error> {
         // Если чтение прошло успешно, сокет не закрыт
         Err(io::Error::new(
             ErrorKind::Other,
-            "Сокет не закрыт или не был подключен",
+            "The socket is not closed or has not been connected",
         ))
     }
 }

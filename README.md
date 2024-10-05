@@ -21,15 +21,15 @@ Todo:
 | elevate_privileges_by_pid✅     | elevate_privileges_by_pid✅  | elevate_privileges_by_pid✅  |
 | **Network Interaction:**       |
 | create_socket✅                 | create_socket✅              | create_socket✅              |
-| listen_socket🕘                 | listen_socket🕘             | listen_socket🕘             |
+| listen_socket✅                 | listen_socket✅             | listen_socket✅             |
 | connect_socket🕘                | connect_socket🕘            | connect_socket🕘            |
 | send_data✅                     | send_data✅                  | send_data✅                  |
-| receive_data❌                  | receive_data❌               | receive_data❌               |
+| receive_data🕘                  | receive_data🕘               | receive_data🕘               |
 | close_socket✅                  | close_socket✅               | close_socket✅               |
 | is_network_available✅          | is_network_available✅       | is_network_available✅       |
 | get_local_ip✅                  | get_local_ip✅               | get_local_ip✅               |
 | get_external_ip✅               | get_external_ip✅            | get_external_ip✅            |
-| resolve_hostname🕘              | resolve_hostname🕘           | resolve_hostname🕘           |
+| resolve_hostname✅              | resolve_hostname✅           | resolve_hostname✅           |
 | get_hostname✅                  | get_hostname✅               | get_hostname✅               |
 | get_network_interfaces✅        | get_network_interfaces✅     | get_network_interfaces✅     |
 | get_interface_name❌            | get_interface_name❌         | get_interface_name❌         |
