@@ -30,8 +30,8 @@ Todo:
 | get_local_ip✅                  | get_local_ip✅               | get_local_ip✅               |
 | get_external_ip✅               | get_external_ip✅            | get_external_ip✅            |
 | resolve_hostname🕘              | resolve_hostname🕘           | resolve_hostname🕘           |
-| get_hostname🕘                  | get_hostname🕘               | get_hostname🕘               |
-| get_network_interfaces❌        | get_network_interfaces❌     | get_network_interfaces❌     |
+| get_hostname✅                  | get_hostname✅               | get_hostname✅               |
+| get_network_interfaces✅        | get_network_interfaces✅     | get_network_interfaces✅     |
 | get_interface_name❌            | get_interface_name❌         | get_interface_name❌         |
 | get_interface_mac_address❌     | get_interface_mac_address❌  | get_interface_mac_address❌  |
 | set_interface_ip❌              | set_interface_ip❌           | set_interface_ip❌           |

@@ -5,6 +5,132 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+#[cfg(target_os = "windows")]
+use std::ptr::null_mut;
+#[cfg(target_os = "windows")]
+use winapi::shared::winerror::ERROR_BUFFER_OVERFLOW;
+#[cfg(target_os = "windows")]
+use winapi::shared::minwindef::ULONG;
+#[cfg(target_os = "windows")]
+use winapi::um::iphlpapi::GetAdaptersAddresses;
+#[cfg(target_os = "windows")]
+use winapi::um::iptypes::IP_ADAPTER_ADDRESSES;
+#[cfg(target_os = "windows")]
+use std::ffi::CStr;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use pnet::datalink;
+
+#[derive(Debug)]
+pub struct NetworkInterface {
+    pub name: String,
+    pub ip_addresses: Vec<String>,
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_network_interfaces() -> Vec<NetworkInterface> {
+    let mut adapters: Vec<NetworkInterface> = Vec::new();
+    let mut buf_len: ULONG = 0;
+
+    unsafe {
+        // Первая попытка вызова для получения требуемого размера буфера
+        let ret = GetAdaptersAddresses(0, 0, null_mut(), null_mut(), &mut buf_len);
+        if ret != ERROR_BUFFER_OVERFLOW {
+            return adapters;
+        }
+
+        // Выделяем буфер для адаптеров
+        let mut buf: Vec<u8> = vec![0; buf_len as usize];
+        let adapter_addresses = buf.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES;
+
+        // Вторая попытка вызова для получения данных об адаптерах
+        if GetAdaptersAddresses(0, 0, null_mut(), adapter_addresses, &mut buf_len) == 0 {
+            let mut adapter = adapter_addresses;
+            while !adapter.is_null() {
+                let adapter_ref = &*adapter;
+
+                let name = CStr::from_ptr(adapter_ref.AdapterName).to_string_lossy().into_owned();
+                let mut ips = Vec::new();
+
+                // Перебираем IP-адреса адаптера
+                let mut address = adapter_ref.FirstUnicastAddress;
+                while !address.is_null() {
+                    let addr = &*address;
+                    let sockaddr = addr.Address.lpSockaddr;
+                    if !sockaddr.is_null() {
+                        let ip_address = format!("{:?}", sockaddr);
+                        ips.push(ip_address);
+                    }
+                    address = addr.Next;
+                }
+
+                // Пропускаем loopback-интерфейсы по IP-адресам
+                if !ips.iter().any(|ip| ip.starts_with("127.") || ip == "::1") {
+                    adapters.push(NetworkInterface { name, ip_addresses: ips });
+                }
+
+                adapter = adapter_ref.Next;
+            }
+        }
+    }
+
+    adapters
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn get_network_interfaces() -> Vec<NetworkInterface> {
+    let mut interfaces = Vec::new();
+    let all_interfaces = datalink::interfaces();
+
+    for iface in all_interfaces {
+        let name = iface.name.clone();
+        let mut ips = Vec::new();
+
+        for ip in iface.ips {
+            ips.push(ip.ip().to_string());
+        }
+
+        // Пропускаем loopback-интерфейсы по IP-адресам
+        if !ips.iter().any(|ip| ip.starts_with("127.") || ip == "::1") {
+            interfaces.push(NetworkInterface {
+                name,
+                ip_addresses: ips,
+            });
+        }
+    }
+
+    interfaces
+}
+
+
+
+
+#[cfg(target_os = "windows")]
+pub fn get_hostname() -> io::Result<String> {
+    use std::process::Command;
+
+    let output = Command::new("hostname").output()?;
+    let hostname = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(hostname)
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_hostname() -> io::Result<String> {
+    use std::process::Command;
+
+    let output = Command::new("hostname").output()?;
+    let hostname = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(hostname)
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_hostname() -> io::Result<String> {
+    use std::process::Command;
+
+    let output = Command::new("hostname").output()?;
+    let hostname = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(hostname)
+}
+
 
 
 pub fn send_data(address: &str, request: &str) -> Result<String, String> {

@@ -28,7 +28,9 @@ pub use network::{
     get_local_ip,
     get_external_ip,
     close_socket,
-    send_data
+    send_data,
+    get_hostname,
+    get_network_interfaces
 };
 
 
@@ -137,15 +139,15 @@ mod tests {
     //    }
     //}
 
-    #[test]
-    fn test_send_data() {
-        let address = "127.0.0.1:8080";
-        let request = "GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n";
-
-        match send_data(address, request) {
-            Ok(response) => println!("Response:\n{}", response),
-            Err(e) => eprintln!("Error: {}", e),
-        }
-    }
+    // #[test]
+    // fn test_send_data() {
+    //     let address = "127.0.0.1:8080";
+    //     let request = "GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n";
+//
+    //     match send_data(address, request) {
+    //         Ok(response) => println!("Response:\n{}", response),
+    //         Err(e) => eprintln!("Error: {}", e),
+    //     }
+    // }
 
 }
