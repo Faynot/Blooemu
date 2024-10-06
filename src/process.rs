@@ -23,31 +23,42 @@ use winapi::um::winnt::PROCESS_QUERY_INFORMATION;
 
 use std::time::Duration;
 
-
 #[cfg(target_os = "windows")]
 #[allow(dead_code)]
 pub fn elevate_privileges_by_pid(pid: u32) -> bool {
-    use winapi::um::processthreadsapi::{OpenProcess, OpenProcessToken};
-    use winapi::um::winnt::{HANDLE, PROCESS_QUERY_INFORMATION, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY, SE_PRIVILEGE_ENABLED};
-    use winapi::um::securitybaseapi::{AdjustTokenPrivileges};
-    use winapi::um::winbase::LookupPrivilegeValueA;
+    use std::ffi::CString;
+    use std::ptr::null_mut;
     use winapi::um::errhandlingapi::GetLastError;
     use winapi::um::handleapi::CloseHandle;
-    use std::ptr::null_mut;
-    use std::ffi::CString;
+    use winapi::um::processthreadsapi::{OpenProcess, OpenProcessToken};
+    use winapi::um::securitybaseapi::AdjustTokenPrivileges;
+    use winapi::um::winbase::LookupPrivilegeValueA;
+    use winapi::um::winnt::{
+        HANDLE, PROCESS_QUERY_INFORMATION, SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES,
+        TOKEN_PRIVILEGES, TOKEN_QUERY,
+    };
 
     unsafe {
         // Открываем процесс по PID
         let process_handle: HANDLE = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
 
         if process_handle.is_null() {
-            eprintln!("Failed to open process with PID: {}, error: {}", pid, GetLastError());
+            eprintln!(
+                "Failed to open process with PID: {}, error: {}",
+                pid,
+                GetLastError()
+            );
             return false;
         }
 
         // Открываем токен процесса
         let mut token_handle: HANDLE = null_mut();
-        if OpenProcessToken(process_handle, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &mut token_handle) == 0 {
+        if OpenProcessToken(
+            process_handle,
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+            &mut token_handle,
+        ) == 0
+        {
             eprintln!("Failed to open process token, error: {}", GetLastError());
             CloseHandle(process_handle);
             return false;
@@ -57,7 +68,10 @@ pub fn elevate_privileges_by_pid(pid: u32) -> bool {
         let priv_name = CString::new("SeDebugPrivilege").unwrap();
         let mut luid = std::mem::zeroed();
         if LookupPrivilegeValueA(null_mut(), priv_name.as_ptr(), &mut luid) == 0 {
-            eprintln!("Failed to lookup privilege value, error: {}", GetLastError());
+            eprintln!(
+                "Failed to lookup privilege value, error: {}",
+                GetLastError()
+            );
             CloseHandle(token_handle);
             CloseHandle(process_handle);
             return false;
@@ -69,8 +83,19 @@ pub fn elevate_privileges_by_pid(pid: u32) -> bool {
         tp.Privileges[0].Luid = luid;
         tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-        if AdjustTokenPrivileges(token_handle, 0, &mut tp, size_of::<TOKEN_PRIVILEGES>() as u32, null_mut(), null_mut()) == 0 {
-            eprintln!("Failed to adjust token privileges, error: {}", GetLastError());
+        if AdjustTokenPrivileges(
+            token_handle,
+            0,
+            &mut tp,
+            size_of::<TOKEN_PRIVILEGES>() as u32,
+            null_mut(),
+            null_mut(),
+        ) == 0
+        {
+            eprintln!(
+                "Failed to adjust token privileges, error: {}",
+                GetLastError()
+            );
             CloseHandle(token_handle);
             CloseHandle(process_handle);
             return false;
@@ -83,9 +108,6 @@ pub fn elevate_privileges_by_pid(pid: u32) -> bool {
         true
     }
 }
-
-
-
 
 #[cfg(target_os = "linux")]
 pub fn elevate_privileges_by_pid(pid: u32) -> bool {
@@ -114,7 +136,6 @@ pub fn elevate_privileges_by_pid(pid: u32) -> bool {
     false
 }
 
-
 #[cfg(target_os = "macos")]
 pub fn elevate_privileges_by_pid(pid: u32) -> bool {
     use std::process::Command;
@@ -141,9 +162,6 @@ pub fn elevate_privileges_by_pid(pid: u32) -> bool {
     eprintln!("Failed to run sudo command.");
     false
 }
-
-
-
 
 #[cfg(target_os = "windows")]
 pub fn elevate_privileges(process_name: &str) -> bool {
@@ -630,4 +648,3 @@ pub fn get_process_name(pid: u32) -> Option<String> {
         None
     }
 }
-

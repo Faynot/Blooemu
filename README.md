@@ -22,9 +22,8 @@ Todo:
 | **Network Interaction:**       |
 | create_socket✅                 | create_socket✅              | create_socket✅              |
 | listen_socket✅                 | listen_socket✅             | listen_socket✅             |
-| connect_socket🕘                | connect_socket🕘            | connect_socket🕘            |
+| connect_socket✅                | connect_socket✅            | connect_socket✅            |
 | send_data✅                     | send_data✅                  | send_data✅                  |
-| receive_data🕘                  | receive_data🕘               | receive_data🕘               |
 | close_socket✅                  | close_socket✅               | close_socket✅               |
 | is_network_available✅          | is_network_available✅       | is_network_available✅       |
 | get_local_ip✅                  | get_local_ip✅               | get_local_ip✅               |
@@ -32,8 +31,8 @@ Todo:
 | resolve_hostname✅              | resolve_hostname✅           | resolve_hostname✅           |
 | get_hostname✅                  | get_hostname✅               | get_hostname✅               |
 | get_network_interfaces✅        | get_network_interfaces✅     | get_network_interfaces✅     |
-| get_interface_name❌            | get_interface_name❌         | get_interface_name❌         |
-| get_interface_mac_address❌     | get_interface_mac_address❌  | get_interface_mac_address❌  |
+| get_interface_name✅            | get_interface_name✅         | get_interface_name✅         |
+|get_mac_address✅|get_mac_address✅|get_mac_address✅|
 | set_interface_ip❌              | set_interface_ip❌           | set_interface_ip❌           |
 | set_interface_mtu❌             | set_interface_mtu❌          | set_interface_mtu❌          |
 | **File System:**               |
@@ -78,15 +77,9 @@ Todo:
 | draw_image❌                    | draw_image❌                 | draw_image❌                 |
 | get_screen_resolution❌         | get_screen_resolution❌      | get_screen_resolution❌      |
 | **Other:**                     |
-| get_operating_system❌          | get_operating_system❌       | get_operating_system❌       |
-| get_architecture❌              | get_architecture❌           | get_architecture❌           |
-| get_cpu_count❌                 | get_cpu_count❌              | get_cpu_count❌              |
-| get_memory_size❌               | get_memory_size❌            | get_memory_size❌            |
-| get_system_time❌               | get_system_time❌            | get_system_time❌            |
-| show_notification❌             | show_notification❌          | show_notification❌          |
 | play_sound❌                    | play_sound❌                 | play_sound❌                 |
 | get_key_state❌                 | get_key_state❌              | get_key_state❌              
-| get_mouse_position❌            | get_mouse_position❌         | get_mouse_position❌         |
+| get_mouse_position✅            | get_mouse_position✅         | get_mouse_position✅         |
 | set_timer❌                     | set_timer❌                  | set_timer❌                  |
 | cancel_timer❌                  | cancel_timer❌               | cancel_timer❌               |
 | alert!✅                        | alert!✅                     | alert!🕘                    |

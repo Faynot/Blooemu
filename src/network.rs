@@ -1,25 +1,73 @@
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use pnet::datalink;
 use serde_json::Value;
-use std::io::{self, Read, Write, ErrorKind};
+#[cfg(target_os = "windows")]
+use std::ffi::CStr;
+use std::fs;
+use std::io::{self, ErrorKind, Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
+use std::path::Path;
+#[cfg(target_os = "windows")]
+use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 #[cfg(target_os = "windows")]
-use std::ptr::null_mut;
+use winapi::shared::minwindef::ULONG;
 #[cfg(target_os = "windows")]
 use winapi::shared::winerror::ERROR_BUFFER_OVERFLOW;
-#[cfg(target_os = "windows")]
-use winapi::shared::minwindef::ULONG;
 #[cfg(target_os = "windows")]
 use winapi::um::iphlpapi::GetAdaptersAddresses;
 #[cfg(target_os = "windows")]
 use winapi::um::iptypes::IP_ADAPTER_ADDRESSES;
-#[cfg(target_os = "windows")]
-use std::ffi::CStr;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-use pnet::datalink;
 
+pub fn get_mac_address() -> Option<String> {
+    let net = Path::new("/sys/class/net");
+    let entry = fs::read_dir(net).ok()?;
+
+    // Find the interface file with the MAC address
+    let iface = entry
+        .filter_map(|p| p.ok())
+        .map(|p| p.path().file_name().expect("Error").to_os_string())
+        .filter_map(|s| s.into_string().ok())
+        .find(|iface| {
+            let iface_path = net.join(iface).join("address");
+            fs::metadata(iface_path).is_ok()
+        });
+
+    // Read the MAC address from the file
+    let macaddr = match iface {
+        Some(iface) => {
+            let iface_path = net.join(&iface).join("address");
+            let mut f = fs::File::open(iface_path).ok()?;
+            let mut macaddr = String::new();
+            f.read_to_string(&mut macaddr).ok()?;
+            Some(macaddr.trim().to_string())
+        }
+        None => None,
+    };
+
+    macaddr
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_interface_name() -> Option<String> {
+    let adapters = get_network_interfaces();
+    adapters.first().map(|iface| iface.name.clone())
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn get_interface_name() -> Option<String> {
+    let interfaces = get_network_interfaces();
+    interfaces.first().map(|iface| iface.name.clone())
+}
+
+pub fn connect_socket<A: ToSocketAddrs>(address: A) -> io::Result<TcpStream> {
+    let stream = TcpStream::connect(address)?;
+    println!("Successfully connected to {}", stream.peer_addr()?);
+    Ok(stream)
+}
 
 pub fn listen_socket(addr: &str) -> io::Result<()> {
     let listener = TcpListener::bind(addr)?;
@@ -51,16 +99,21 @@ fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
     let bytes_read = stream.read(&mut buffer)?;
 
     if bytes_read == 0 {
-        return Err(io::Error::new(ErrorKind::ConnectionAborted, "Connection closed"));
+        return Err(io::Error::new(
+            ErrorKind::ConnectionAborted,
+            "Connection closed",
+        ));
     }
 
-    println!("Received data: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+    println!(
+        "Received data: {}",
+        String::from_utf8_lossy(&buffer[..bytes_read])
+    );
 
     stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n")?;
     stream.flush()?;
     Ok(())
 }
-
 
 pub fn resolve_hostname(hostname: &str) -> Result<IpAddr, String> {
     let addrs = (hostname, 0).to_socket_addrs(); // Port 0, since it is not important when resolving the hostname
@@ -71,11 +124,10 @@ pub fn resolve_hostname(hostname: &str) -> Result<IpAddr, String> {
             } else {
                 Err(format!("No IP addresses found for hostname: {}", hostname))
             }
-        },
+        }
         Err(e) => Err(format!("Failed to resolve hostname {}: {}", hostname, e)),
     }
 }
-
 
 #[derive(Debug)]
 pub struct NetworkInterface {
@@ -105,7 +157,9 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
             while !adapter.is_null() {
                 let adapter_ref = &*adapter;
 
-                let name = CStr::from_ptr(adapter_ref.AdapterName).to_string_lossy().into_owned();
+                let name = CStr::from_ptr(adapter_ref.AdapterName)
+                    .to_string_lossy()
+                    .into_owned();
                 let mut ips = Vec::new();
 
                 // Second call attempt to get adapter information
@@ -122,7 +176,10 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
 
                 // Passing loopback interfaces by IP addresses
                 if !ips.iter().any(|ip| ip.starts_with("127.") || ip == "::1") {
-                    adapters.push(NetworkInterface { name, ip_addresses: ips });
+                    adapters.push(NetworkInterface {
+                        name,
+                        ip_addresses: ips,
+                    });
                 }
 
                 adapter = adapter_ref.Next;
@@ -158,9 +215,6 @@ pub fn get_network_interfaces() -> Vec<NetworkInterface> {
     interfaces
 }
 
-
-
-
 #[cfg(target_os = "windows")]
 pub fn get_hostname() -> io::Result<String> {
     use std::process::Command;
@@ -188,23 +242,26 @@ pub fn get_hostname() -> io::Result<String> {
     Ok(hostname)
 }
 
-
-
 pub fn send_data(address: &str, request: &str) -> Result<String, String> {
     // Establishing a connection to the server
     let mut stream = TcpStream::connect(address).map_err(|e| e.to_string())?;
-    stream.set_read_timeout(Some(Duration::new(5, 0))).map_err(|e| e.to_string())?;
+    stream
+        .set_read_timeout(Some(Duration::new(5, 0)))
+        .map_err(|e| e.to_string())?;
 
     // Отправляем запрос
-    stream.write_all(request.as_bytes()).map_err(|e| e.to_string())?;
+    stream
+        .write_all(request.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     // Читаем ответ
     let mut response = String::new();
-    stream.read_to_string(&mut response).map_err(|e| e.to_string())?;
+    stream
+        .read_to_string(&mut response)
+        .map_err(|e| e.to_string())?;
 
     Ok(response)
 }
-
 
 pub fn close_socket(addr: SocketAddr) -> Result<(), io::Error> {
     // Attempting to connect to a socket address
@@ -418,6 +475,3 @@ fn parse_http_request(request: &str) -> (String, String, String) {
 
     (method, path, body)
 }
-
-
-
