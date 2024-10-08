@@ -22,6 +22,7 @@ use winapi::um::iphlpapi::GetAdaptersAddresses;
 #[cfg(target_os = "windows")]
 use winapi::um::iptypes::IP_ADAPTER_ADDRESSES;
 
+
 pub fn get_mac_address() -> Option<String> {
     let net = Path::new("/sys/class/net");
     let entry = fs::read_dir(net).ok()?;

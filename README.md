@@ -33,26 +33,22 @@ Todo:
 | get_network_interfaces✅        | get_network_interfaces✅     | get_network_interfaces✅     |
 | get_interface_name✅            | get_interface_name✅         | get_interface_name✅         |
 |get_mac_address✅|get_mac_address✅|get_mac_address✅|
-| set_interface_ip❌              | set_interface_ip❌           | set_interface_ip❌           |
-| set_interface_mtu❌             | set_interface_mtu❌          | set_interface_mtu❌          |
 | **File System:**               |
-| create_file❌                   | create_file❌                | create_file❌                |
-| open_file❌                     | open_file❌                  | open_file❌                  |
-| read_file❌                     | read_file❌                  | read_file❌                  |
-| write_file❌                    | write_file❌                 | write_file❌                 |
-| close_file❌                    | close_file❌                 | close_file❌                 
-| create_directory❌              | create_directory❌           | create_directory❌           |
-| delete_directory❌              | delete_directory❌           | delete_directory❌           |
-| move_directory❌                | move_directory❌             | move_directory❌             |
-| get_directory_contents❌        | get_directory_contents❌     | get_directory_contents❌     |
-| has_file_access❌               | has_file_access❌            | has_file_access❌            |
-| has_directory_access❌          | has_directory_access❌       | has_directory_access❌       |
-| get_file_size❌                 | get_file_size❌              | get_file_size❌              |
-| get_file_creation_date❌        | get_file_creation_date❌     | get_file_creation_date❌     |
-| get_file_modification_date❌    | get_file_modification_date❌ | get_file_modification_date❌ |
-| get_file_owner❌                | get_file_owner❌             | get_file_owner❌             |
-| create_symlink❌                | create_symlink❌             | create_symlink❌             |
-| get_symlink_target❌            | get_symlink_target❌         | get_symlink_target❌         |
+| create_file✅                   | create_file✅                | create_file✅                |
+| open_file✅                     | open_file✅                  | open_file✅                  |
+| read_file✅                     | read_file✅                  | read_file✅                  |
+| write_file✅                    | write_file✅                 | write_file✅                 |
+| create_directory✅              | create_directory✅           | create_directory✅           |
+| delete_directory✅              | delete_directory✅           | delete_directory✅           |
+| move_directory✅                | move_directory✅             | move_directory✅             |
+| get_directory_contents✅        | get_directory_contents✅     | get_directory_contents✅     |
+| has_file_access✅               | has_file_access✅            | has_file_access✅            |
+| has_directory_access✅          | has_directory_access✅       | has_directory_access✅       |
+| get_file_size✅                 | get_file_size✅              | get_file_size✅              |
+| get_file_creation_date✅        | get_file_creation_date✅     | get_file_creation_date✅     |
+| get_file_modification_date✅    | get_file_modification_date✅ | get_file_modification_date✅ |
+| get_file_owner✅                | get_file_owner✅             | get_file_owner✅             |
+| create_symlink✅                | create_symlink✅             | create_symlink✅             |
 | **Graphical Interface (GUI):** |
 | create_window❌                 | create_window❌              | create_window❌              |
 | set_window_title❌              | set_window_title❌           | set_window_title❌           |

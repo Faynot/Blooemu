@@ -535,6 +535,7 @@ fn filetime_to_duration(filetime: FILETIME) -> Duration {
     let ft = u64::from(filetime.dwHighDateTime) << 32 | u64::from(filetime.dwLowDateTime);
     Duration::from_nanos(ft * 10) // Convert from 100-nanosecond intervals to nanoseconds
 }
+
 #[cfg(target_os = "windows")]
 pub fn get_process_memory_usage(task_name: &str) -> Option<u64> {
     let pid = get_pid(task_name)?;
