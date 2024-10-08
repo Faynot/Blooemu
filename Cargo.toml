@@ -1,6 +1,6 @@
 [package]
 name = "blooemu"
-version = "0.1.18"
+version = "0.2.0"
 edition = "2021"
 description = "the best library for OS API's manipulation"
 license = "MIT"
@@ -10,7 +10,7 @@ authors = ["INF - Faynot faynotdev@gmail.com", "TGC of Faynot - @iilovesoll", "T
 crate-type = ["lib"]
 
 [dependencies]
-winapi = { version = "0.3.9", features = ["windef", "winuser", "tlhelp32", "handleapi", "processthreadsapi", "psapi", "winnt", "minwindef", "securitybaseapi", "errhandlingapi", "winbase", "handleapi", "iphlpapi", "winerror", "ws2def", "winerror", "iptypes", "ifmib", "accctrl", "aclapi", "sddl"] }
+winapi = { version = "0.3.9", features = ["windef", "winuser", "tlhelp32", "handleapi", "processthreadsapi", "psapi", "winnt", "minwindef", "securitybaseapi", "errhandlingapi", "winbase", "handleapi", "iphlpapi", "winerror", "ws2def", "winerror", "iptypes", "ifmib", "accctrl", "aclapi", "sddl", "mmsystem", "shellapi", "winuser"] }
 notify-rust = "4.5"
 cfg-if = "1.0"
 nix = "0.29.0"

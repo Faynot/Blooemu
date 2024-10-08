@@ -46,7 +46,9 @@ pub use process::
 pub use utils::
 {
     close,
-    open
+    open,
+    set_timer,
+    cancel_timer
 };
 
 pub use file_system::{
@@ -455,5 +457,25 @@ mod tests {
 //        }
 //        Ok(())
 //    }
+
+    use std::thread;
+    use std::time::Duration;
+    #[test]
+    fn test_set_timer() {
+        let seconds = 5;
+
+        let tx = set_timer(seconds, || {
+            println!("Таймер завершил работу!");
+        });
+
+        println!("Программа ожидает завершения таймера...");
+        thread::sleep(Duration::from_secs(2)); // Ожидаем 2 секунды
+
+        cancel_timer(tx); // Отменяем таймер
+
+        println!("Таймер отменен!");
+        thread::sleep(Duration::from_secs(4));
+    }
+
 
 }

@@ -49,34 +49,13 @@ Todo:
 | get_file_modification_date✅    | get_file_modification_date✅ | get_file_modification_date✅ |
 | get_file_owner✅                | get_file_owner✅             | get_file_owner✅             |
 | create_symlink✅                | create_symlink✅             | create_symlink✅             |
-| **Graphical Interface (GUI):** |
-| create_window❌                 | create_window❌              | create_window❌              |
-| set_window_title❌              | set_window_title❌           | set_window_title❌           |
-| set_window_position❌           | set_window_position❌        | set_window_position❌        |
-| set_window_size❌               | set_window_size❌            | set_window_size❌            |
-| show_window❌                   | show_window❌                | show_window❌                |
-| hide_window❌                   | hide_window❌                | hide_window❌                
-| close_window❌                  | close_window❌               | close_window❌               |
-| create_button❌                 | create_button❌              | create_button❌              |
-| create_label❌                  | create_label❌               | create_label❌               |
-| create_text_box❌               | create_text_box❌            | create_text_box❌            |
-| create_list_box❌               | create_list_box❌            | create_list_box❌            |
-| create_menu❌                   | create_menu❌                | create_menu❌                |
-| register_event_handler❌        | register_event_handler❌     | register_event_handler❌     |
-| handle_event❌                  | handle_event❌               | handle_event❌               |
-| get_event_type❌                | get_event_type❌             | get_event_type❌             |
-| get_event_data❌                | get_event_data❌             | get_event_data❌             |
-| draw_line❌                     | draw_line❌                  | draw_line❌                  |
-| draw_rectangle❌                | draw_rectangle❌             | draw_rectangle❌             |
-| draw_circle❌                   | draw_circle❌                | draw_circle❌                |
-| draw_text❌                     | draw_text❌                  | draw_text❌                  |
-| draw_image❌                    | draw_image❌                 | draw_image❌                 |
-| get_screen_resolution❌         | get_screen_resolution❌      | get_screen_resolution❌      |
 | **Other:**                     |
-| play_sound❌                    | play_sound❌                 | play_sound❌                 |
-| get_key_state❌                 | get_key_state❌              | get_key_state❌              
 | get_mouse_position✅            | get_mouse_position✅         | get_mouse_position✅         |
-| set_timer❌                     | set_timer❌                  | set_timer❌                  |
-| cancel_timer❌                  | cancel_timer❌               | cancel_timer❌               |
-| alert!✅                        | alert!✅                     | alert!🕘                    |
-| error!✅                        | error!✅                     | error!🕘                    |
+| set_timer✅                     | set_timer✅                  | set_timer✅                  |
+| cancel_timer✅                  | cancel_timer✅               | cancel_timer✅               |
+| alert!✅                        | alert!✅                     | alert!✅                    |
+| error!✅                        | error!✅                     | error!✅                    |
+
+
+# Docs:
+_later..._

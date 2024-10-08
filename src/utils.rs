@@ -1,4 +1,28 @@
 use std::env;
+use std::sync::mpsc::{channel, Sender};
+use std::thread;
+use std::time::Duration;
+
+pub fn set_timer(seconds: u64, callback: impl FnOnce() + Send + 'static) -> Sender<()> {
+    let (tx, rx) = channel(); // Создаем канал для отмены таймера
+
+    thread::spawn(move || {
+        thread::sleep(Duration::from_secs(seconds));
+
+        // Проверяем, был ли отменен таймер
+        if rx.try_recv().is_err() {
+            callback();
+        }
+    });
+
+    tx // Возвращаем передатчик для отмены таймера
+}
+
+pub fn cancel_timer(tx: Sender<()>) {
+    // Отправляем сигнал отмены по каналу
+    tx.send(()).unwrap();
+}
+
 
 // Function to open a file or application
 pub fn open(path: &str) {
